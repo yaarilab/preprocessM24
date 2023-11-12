@@ -85,13 +85,12 @@ if (params.reads){
 Channel
 	.fromFilePairs( params.reads , size: params.mate == "single" ? 1 : params.mate == "pair" ? 2 : params.mate == "triple" ? 3 : params.mate == "quadruple" ? 4 : -1 )
 	.ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-	.into{g_6_reads_g_11;g_6_reads_g17_6}
+	.set{g_6_reads_g_11}
  } else {  
 	g_6_reads_g_11 = Channel.empty()
-	g_6_reads_g17_6 = Channel.empty()
  }
 
-Channel.value(params.mate).into{g_7_mate_g_11;g_7_mate_g1_15;g_7_mate_g1_19;g_7_mate_g1_12;g_7_mate_g14_15;g_7_mate_g14_19;g_7_mate_g14_12;g_7_mate_g17_6}
+Channel.value(params.mate).into{g_7_mate_g_11;g_7_mate_g1_15;g_7_mate_g1_19;g_7_mate_g1_12;g_7_mate_g14_15;g_7_mate_g14_19;g_7_mate_g14_12}
 Channel.value(params.mate2).into{g_10_mate_g2_7;g_10_mate_g2_5;g_10_mate_g2_0;g_10_mate_g19_7;g_10_mate_g19_5;g_10_mate_g19_0}
 
 
@@ -1279,42 +1278,6 @@ output:
 
 rmarkdown::render("${rmk}", clean=TRUE, output_format="html_document", output_dir=".")
 
-"""
-}
-
-//* params.run_FastQC =  "no"  //* @dropdown @options:"yes","no"
-if (params.run_FastQC == "no") { println "INFO: FastQC will be skipped"}
-
-
-process FastQC_FastQC {
-
-publishDir params.outdir, mode: 'copy', saveAs: {filename -> if (filename =~ /.*.(html|zip)$/) "fastqc/$filename"}
-input:
- set val(name), file(reads) from g_6_reads_g17_6
- val mate from g_7_mate_g17_6
-
-output:
- file '*.{html,zip}'  into g17_6_FastQCout00
-
-errorStrategy 'retry'
-maxRetries 5
-
-script:
-nameAll = reads.toString()
-if (nameAll.contains('.gz')) {
-    file =  nameAll - '.gz' - '.gz'
-    runGzip = "ls *.gz | xargs -i echo gzip -df {} | sh"
-} else {
-    file =  nameAll 
-    runGzip = ''
-}
-"""
-if [ "${params.run_FastQC}" == "yes" ]; then
-    ${runGzip}
-    fastqc ${file} 
-else
-    touch process.skiped.html
-fi
 """
 }
 
